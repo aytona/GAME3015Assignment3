@@ -1,38 +1,20 @@
-#ifndef SCENENODE_HEADER
-#define SCENENODE_HEADER
+#pragma once
+#include "glut.h"
 
+class SceneNode {
+public:
+    SceneNode();
+    ~SceneNode();
+    virtual void Draw();
+    void SetMaterial(int i);
+    static void NewMaterial(int i, float j, float k, float x);
+    void SetPoint(int i, int j);
+    const static GLfloat Ambient[][24];
+    const static GLfloat Diffuse[][4];
+    const static GLfloat Specular[][4];
+    const static GLfloat Shininess[][1];
 
-#include "glm\glm.hpp"
-#include <glm\gtx\matrix_decompose.hpp>
-#include "glm\gtc\matrix_transform.hpp"
-#include <vector>
-#include "GL\glut.h"
-#include <iostream>
-#include <glm/gtc/type_ptr.hpp>
-
-class SceneNode
-{
-	protected:
-	std::vector<SceneNode*> children;
-	SceneNode* parent;
-	glm::mat4 transformation;
-	float r, g, b;
-	float scale;
-
-
-	public:
-		//Constructor
-		SceneNode(glm::mat4 transformation, float scale);
-
-		//Methods
-		void SceneNode::addChild(SceneNode*);
-		void SceneNode::setColor(float r, float g, float b);
-		glm::mat4 SceneNode::getTransformationMatrix();
-		std::vector<SceneNode*> getChildren();
-		SceneNode* SceneNode::getParent();
-		void SceneNode::setParent(SceneNode* p);
-		void SceneNode::render();
-		virtual void SceneNode::draw(float scale) = 0;
-
+protected:
+    int list_ptr, list_size, material;
+    float x, y, z;
 };
-#endif // !SCENENODE_HEADER

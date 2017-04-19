@@ -1,6 +1,6 @@
-#include "Circle.h"
+#include "Powerup.hpp"
 
-Circle::Circle() {
+Powerup::Powerup() {
     x = 0;
     y = 0;
     z = 0;
@@ -8,11 +8,11 @@ Circle::Circle() {
     list_ptr = glGenLists(1);
     glNewList(list_ptr, GL_COMPILE);
     glPushMatrix();
-    glutSolidSphere(0.15, 20, 20);
+    glutSolidSphere(0.25, 20, 20);
     glPopMatrix();
     glEndList();
 }
 
-Circle::~Circle() {
+Powerup::~Powerup() {
 
 }

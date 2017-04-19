@@ -148,23 +148,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Circle.cpp" />
+    <ClCompile Include="GameManager.cpp" />
+    <ClCompile Include="Ghost.cpp" />
+    <ClCompile Include="Pacman.cpp" />
+    <ClCompile Include="Powerup.cpp" />
     <ClCompile Include="SceneNode.cpp" />
-    <ClCompile Include="Sphere.cpp" />
-    <ClCompile Include="Square.cpp" />
+    <ClCompile Include="Seeker.cpp" />
     <ClCompile Include="Starter_Class.cpp" />
-    <ClCompile Include="Tank.cpp" />
-    <ClCompile Include="Triangle.cpp" />
+    <ClCompile Include="Text.cpp" />
+    <ClCompile Include="Wall.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
     <ClInclude Include="Circle.h" />
+    <ClInclude Include="GameManager.hpp" />
+    <ClInclude Include="Ghost.hpp" />
+    <ClInclude Include="glut.h" />
+    <ClInclude Include="Pacman.hpp" />
+    <ClInclude Include="Powerup.hpp" />
     <ClInclude Include="SceneNode.h" />
-    <ClInclude Include="Sphere.h" />
-    <ClInclude Include="Square.h" />
-    <ClInclude Include="Tank.h" />
-    <ClInclude Include="Triangle.h" />
+    <ClInclude Include="Seeker.hpp" />
+    <ClInclude Include="Text.hpp" />
+    <ClInclude Include="Wall.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

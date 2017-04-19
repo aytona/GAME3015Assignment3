@@ -1,205 +1,153 @@
-#include <math.h>
-#include "Square.h"
-#include "Triangle.h"
-#include "Tank.h"
+#include "glut.h"
 #include "Circle.h"
-#include "Camera.h"
-#include "Sphere.h"
+#include "GameManager.hpp"
+#include "Text.hpp"
+#include <math.h>
+#include <mmsystem.h>
 
+GameManager* gameManager;
+int Width = 800;
+int Height = 800;
+int rotX[2] = { 300, 1 };
+int rotY[2] = { 0, 0 };
+int rotZ[2] = { 0, 0 };
+int timer = 0;
 
+float m_AmbientDiffuse[] = { 0.0, 0.0, 0.0, 1.0 };
+float m_Specular[] = { 0.0, 0.0, 0.0, 1.0 };
+float m_Emission[] = { 0.0, 0.0, 0.0, 1.0 };
+float m_Shininess = 0.4;
+float f_Emission[] = { 0.0, 0.0, 0.0, 1.0 };
+float l_Ambient[] = { 0.0, 0.2, 0.0, 1.0 };
+float l_DiffuseSpecular[] = { 0.6, 0.2, 0.067, 0.0 };
+float l_pos[] = { 0.0, 0.0, 2.0, 1.0 };
+float spotDir[] = { 0.0, 0.0, -1.0 };
+float spotCutoff = 50.0;
+float spotExponent = 5.0;
 
+void Reshape(int x, int y);
+void Menu(int option);
+void Init();
+void InitObjects();
+void Display();
+void Special(int key, int x, int y);
+void Key(unsigned char key, int x, int y);
+static void Idle();
+void Timer(int t);
 
-float rotation_angle = 0.0f;
-float x, y=0;
-int oldTimeSinceStart = 0;
+int main(int argc, char *argv[]) {
+    glutInit(&argc, argv);
+    glutInitWindowSize(Width, Height);
+    glutInitWindowPosition(100, 100);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("Pacman");
+    InitObjects();
+    Init();
+    glutReshapeFunc(Reshape);
+    glutDisplayFunc(Display);
+    glutKeyboardFunc(Key);
+    glutSpecialFunc(Special);
+    glutIdleFunc(Idle);
+    glutTimerFunc(350, Timer, 350);
 
-Camera* cam;
-GLint windowWidth = 800;
-GLint windowHeight = 600;
+    glutMainLoop();
 
-GLint midWindowX = windowWidth / 2;
-GLint midWindowY = windowHeight / 2;
-
-GLfloat fieldOfView = 45.0f;
-GLfloat near = 0.01f;
-GLfloat far = 150.0f;
-
-GLuint texture[2];
-
-void handleKeyPresses(unsigned char key, int x, int y)
-{
-	switch (key)
-	{
-		case 'w':
-			cam->holdingForward = true;
-			break;
-		case 's':
-			cam->holdingBackward = true;
-			break;
-		case 'a':
-			cam->holdingLeftStrafe = true;
-			break;
-		case 'd':
-			cam->holdingRightStrafe = true;
-			break;
-		default:
-			//do nothing
-			break;
-	}
+    return EXIT_SUCCESS;
 }
 
-void handleKeyReleased(unsigned char key, int x, int y)
-{
-	switch (key)
-	{
-	case 'w':
-		cam->holdingForward = false;
-		break;
-	case 's':
-		cam->holdingBackward = false;
-		break;
-	case 'a':
-		cam->holdingLeftStrafe = false;
-		break;
-	case 'd':
-		cam->holdingRightStrafe = false;
-		break;
-	default:
-		//do nothing
-		break;
-	}
+void Init() {
+    glEnable(GL_DEPTH_TEST);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    glEnable(GL_LIGHTING);
+    GLfloat globalAmbient[] = { 1.0, 1.0, 1.0, 0.0 };
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
+    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, m_AmbientDiffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, m_Specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, m_Shininess);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
 }
 
-void handleMouseMove(int button, int state, int x, int y)
-{
-	cam->handleMouseMove(x, y);
+void InitObjects() {
+    gameManager = new GameManager();
+    gameManager->SetKeys(1000 + 97, 1000 + 119, 1000 + 100, 1000 + 115);
 }
 
-void myDisplay(void)
-{
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//Ready to Draw
-	
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	
-		
-	
-	glRotatef(cam->getRotation().x, 1.0f, 0.0f, 0.0f);  
-	glRotatef(cam->getRotation().y, 0.0f, 1.0f, 0.0f);
-	glTranslatef(-cam->getPosition().x, -cam->getPosition().y, -cam->getPosition().z);
+void Display() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	
-	glEnable(GL_TEXTURE_2D);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0, 0.0); glVertex3f(0.0, 0.00, 20.0);
-	glTexCoord2f(200.0, 0.0); glVertex3f(200.0, 0.0, 20.0);
-	glTexCoord2f(200.0, 200.0); glVertex3f(200.0, 200.0, 20.0);
-	glTexCoord2f(0.0, 200.0); glVertex3f(0.0, 200.0, 20.0);
-	glEnd();
-	
-	glBindTexture(GL_TEXTURE_2D, texture[1]);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0, 0.0); glVertex3f(0.0, 0.00, 0.0);
-	glTexCoord2f(200.0, 0.0); glVertex3f(200.0, 0.0, 0.0);
-	glTexCoord2f(200.0, 200.0); glVertex3f(200.0, 200.0, 0.0);
-	glTexCoord2f(0.0, 200.0); glVertex3f(0.0, 200.0, 0.0);
-	glEnd();
-	
-	Sphere sp = Sphere(glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0)), 0.1);
-	sp.render();
-
-	Sphere sp1 = Sphere(glm::translate(glm::mat4(1.0f), glm::vec3(0,0.5, 0)), 0.1);
-	sp1.render();
-
-	Sphere sp2 = Sphere(glm::translate(glm::mat4(1.0f), glm::vec3(0.5, 0, 0)), 0.1);
-	sp2.render();
-		
-	
-
-	glFlush();
+    if ((gameManager->isPlaying()) && (!gameManager->hasEnded())) {
+        glPushMatrix();
+        gameManager->SetPoint(0, 0);
+        gameManager->Draw();
+        glPopMatrix();
+    } else if (!gameManager->isPlaying()) {
+        Reshape(Width, Height);
+        Text::DrawText("Game is paused, p to unpause or r to restart");
+    } else if (gameManager->hasEnded()) {
+        Reshape(Width, Height);
+        glPushMatrix();
+        Text::DrawText("Game Over!");
+        glTranslatef(0.0, 1.0, 0.0);
+        Text::DrawText("Your Score: ");
+        glTranslatef(0.0, 1.0, 0.0);
+        Text::DrawInt(gameManager->Score);
+        glPopMatrix();
+    }
+    glutSwapBuffers();
 }
 
-void init()
-{
-	glViewport(0, 0, (GLsizei) windowWidth, (GLsizei) windowHeight);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+void Timer(int t) {
+    if (gameManager->isPlaying() && !gameManager->hasEnded()) {
+        gameManager->Update();
+        t = gameManager->Speed;
+    }
 
-	GLfloat aspectRatio = (windowWidth > windowHeight) ? float(windowWidth) / float(windowHeight) : float(windowHeight) / float(windowWidth);
-	GLfloat fH = tan(float(fieldOfView / 360.0f * 3.14159f)) * near;
-	GLfloat fW = fH * aspectRatio;
-	glFrustum(-fW, fW, -fH, fH, near, far);
-	
-
-
-	// Creatint texture
-	GLfloat textureData[] = {
-		1.0f, 0.0f, 0.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 0.0f, 0.0f
-	};
-
-	GLfloat textureData2[] = {
-		0.0f, 1.0f, 0.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		0.0f, 1.0f, 0.0f
-	};
-	
-	glGenTextures(2, texture);
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_FLOAT, textureData);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	glBindTexture(GL_TEXTURE_2D, texture[1]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_FLOAT, textureData2);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
-void myIdleFunc()
-{
-	//rotation_angle += 0.01;
-	x += 0.0001;
-	y -= 0.0001;
-	int timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
-	int deltaTime = timeSinceStart - oldTimeSinceStart;
-	oldTimeSinceStart = timeSinceStart;
-	cam->move(deltaTime / 1000.0f);
-	glutPostRedisplay();
+    glutPostRedisplay();
+    glutTimerFunc(t, Timer, t);
 }
 
-int main(int argc, char** argv)
-{
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-	glutInitWindowSize(900, 900);
-	glutInitWindowPosition(100, 100);
-	glutCreateWindow("My First Application");
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-	glEnable(GL_DEPTH_TEST);
-	glutDisplayFunc(myDisplay);
-	glutIdleFunc(myIdleFunc);
+void Key(unsigned char key, int x, int y) {
+    Special(key + 1000, x, y);
+}
 
-	glutKeyboardFunc(handleKeyPresses);
-	glutKeyboardUpFunc(handleKeyReleased);
-	
-	glutMouseFunc(handleMouseMove);
-	
-	cam = new Camera(windowWidth, windowHeight);
-	init();
-	glutMainLoop();
-	return 0;
+void Special(int key, int x, int y) {
+    if (key == 1114) {
+        InitObjects();
+        Reshape(Width, Height);
+    }
+
+    gameManager->KeyListener(key, x, y);
+    glutPostRedisplay();
+}
+
+void Menu(int option) {
+    switch (option) {
+    case 1:
+        if (!gameManager->hasEnded()) {
+            gameManager->Pause();
+        }
+        break;
+    case 2:
+        gameManager = new GameManager();
+        break;
+    case 0:
+        exit(0);
+        break;
+    }
+}
+
+void Reshape(int x, int y) {
+    Width = x;
+    Height = y;
+    glViewport(0, 0, Width, Height);
+    gameManager->SetDimensions(Width, Height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-1.5, 28.5, 31.5, -1.5, -512, 512);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+static void Idle() {
+    glutPostRedisplay();
 }
